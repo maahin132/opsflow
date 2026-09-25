@@ -1,3 +1,4 @@
+
 """
 Base Django settings for OpsFlow.
 
@@ -42,7 +43,7 @@ if not SECRET_KEY:
 # ---------------------------------------------------------
 
 INSTALLED_APPS = [
-    # Django
+    # Django built-in apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -50,13 +51,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third-party
+    # Third-party apps
     "rest_framework",
     "corsheaders",
 
-    # Local apps
+    # OpsFlow local apps
     "apps.accounts",
     "apps.organizations",
+    "apps.projects",
 ]
 
 
@@ -81,7 +83,6 @@ MIDDLEWARE = [
 # ---------------------------------------------------------
 
 ROOT_URLCONF = "config.urls"
-
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
@@ -169,7 +170,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # ---------------------------------------------------------
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
