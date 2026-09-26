@@ -23,4 +23,10 @@ urlpatterns = [
         "api/",
         include("apps.projects.urls"),
     ),
+
+    # Tasks APIs
+    path(
+        "api/",
+        include("apps.tasks.urls"),
+    ),
 ]
