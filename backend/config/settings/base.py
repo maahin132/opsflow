@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.organizations",
     "apps.projects",
     "apps.tasks",
+    "apps.comments",  # Task Comments & Activity Log
 ]
 
 
@@ -83,9 +84,7 @@ MIDDLEWARE = [
 # ---------------------------------------------------------
 
 ROOT_URLCONF = "config.urls"
-
 WSGI_APPLICATION = "config.wsgi.application"
-
 ASGI_APPLICATION = "config.asgi.application"
 
 
@@ -172,11 +171,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # ---------------------------------------------------------
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -185,11 +182,9 @@ USE_TZ = True
 # ---------------------------------------------------------
 
 STATIC_URL = "/static/"
-
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
-
 MEDIA_ROOT = BASE_DIR / "media"
 
 
@@ -208,14 +203,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
     ],
-
     "DEFAULT_PAGINATION_CLASS": (
         "rest_framework.pagination.PageNumberPagination"
     ),
-
     "PAGE_SIZE": 20,
 }

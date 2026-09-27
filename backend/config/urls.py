@@ -29,4 +29,10 @@ urlpatterns = [
         "api/",
         include("apps.tasks.urls"),
     ),
+
+    # Task Comments & Activity APIs
+    path(
+        "api/",
+        include("apps.comments.urls"),
+    ),
 ]
