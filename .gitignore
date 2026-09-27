@@ -49,3 +49,9 @@ htmlcov/
 *.tmp
 *.temp
 *.swp
+# Local development notes
+/PROJECT_STATUS.md
+/ARCHITECTURE.md
+
+# Local API source dump
+/backend/api_source.txt
