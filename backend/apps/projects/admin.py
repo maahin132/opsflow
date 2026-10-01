@@ -69,7 +69,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
     ordering = ["-created_at"]
 
-    date_hierarchy = "created_at"
+    # date_hierarchy = "created_at"
 
 
 @admin.register(ProjectMember)

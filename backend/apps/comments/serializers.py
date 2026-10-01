@@ -37,12 +37,16 @@ class TaskActivitySerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True,
     )
+    task_title = serializers.ReadOnlyField(source="task.title")
+    project_name = serializers.ReadOnlyField(source="task.project.name")
 
     class Meta:
         model = TaskActivity
         fields = [
             "id",
             "task",
+            "task_title",
+            "project_name",
             "actor",
             "actor_name",
             "action",
@@ -54,6 +58,8 @@ class TaskActivitySerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "task",
+            "task_title",
+            "project_name",
             "actor",
             "actor_name",
             "action",

@@ -52,6 +52,7 @@ htmlcov/
 # Local development notes
 /PROJECT_STATUS.md
 /ARCHITECTURE.md
+/docs/IMPLEMENTATION_SUMMARY.md
 
 # Local API source dump
 /backend/api_source.txt

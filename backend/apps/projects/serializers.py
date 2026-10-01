@@ -37,6 +37,10 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    organization_pk = serializers.IntegerField(
+        source="organization_id",
+        read_only=True,
+    )
     organization_id = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all(),
         source="organization",
@@ -62,6 +66,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "organization_id",
+            "organization_pk",
             "organization_name",
             "name",
             "description",

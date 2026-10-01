@@ -13,6 +13,10 @@ class TaskSerializer(serializers.ModelSerializer):
         source="project",
         write_only=True,
     )
+    project_pk = serializers.IntegerField(
+        source="project_id",
+        read_only=True,
+    )
 
     project_name = serializers.ReadOnlyField(
         source="project.name"
@@ -32,6 +36,7 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "project_id",
+            "project_pk",
             "project_name",
             "title",
             "description",
@@ -115,6 +120,18 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
         if project and assigned_to:
+            is_organization_member = OrganizationMember.objects.filter(
+                organization=project.organization,
+                user=assigned_to,
+            ).exists()
+
+            if not is_organization_member:
+                raise serializers.ValidationError({
+                    "assigned_to": (
+                        "The assigned user must belong to the project's workspace."
+                    )
+                })
+
             is_project_member = ProjectMember.objects.filter(
                 project=project,
                 user=assigned_to,

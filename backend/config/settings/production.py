@@ -53,3 +53,8 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
     if origin.strip()
 ]
+CORS_ALLOW_CREDENTIALS = True
+
+# Session cookies must be allowed on cross-origin frontend API requests.
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = "None"

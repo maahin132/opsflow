@@ -8,6 +8,8 @@ from rest_framework.test import APITestCase
 
 from apps.organizations.models import Organization, OrganizationMember
 from apps.projects.models import Project, ProjectMember
+from apps.comments.models import TaskActivity
+from apps.tasks.models import Task
 
 
 User = get_user_model()
@@ -369,6 +371,12 @@ class ProjectAPITests(APITestCase):
             role=ProjectMember.Role.MEMBER,
             assigned_by=self.manager
         )
+        task = Task.objects.create(
+            project=self.project,
+            title="Member-owned task",
+            assigned_to=self.employee,
+            created_by=self.owner,
+        )
 
         response = self.client.delete(
             reverse(
@@ -390,6 +398,24 @@ class ProjectAPITests(APITestCase):
                 pk=membership.pk
             ).exists()
         )
+        task.refresh_from_db()
+        self.assertIsNone(task.assigned_to_id)
+        self.assertTrue(
+            TaskActivity.objects.filter(
+                task=task,
+                actor=self.manager,
+                action="unassigned",
+            ).exists()
+        )
+
+    def test_remove_project_member_rejects_malformed_user_id(self):
+        self.client.force_authenticate(user=self.manager)
+
+        response = self.client.delete(
+            f"{self.project_detail_url}members/not-an-id/"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # --------------------------------------------------
     # VALIDATION

@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 
 from apps.organizations.models import Organization, OrganizationMember
 from apps.projects.models import Project, ProjectMember
+from apps.comments.models import TaskActivity
 
 from .models import Task
 
@@ -200,6 +201,37 @@ class TaskAPITests(APITestCase):
             ).exists()
         )
 
+    def test_cannot_assign_task_to_user_removed_from_workspace(self):
+        self.client.force_authenticate(user=self.owner)
+        ProjectMember.objects.create(
+            project=self.project,
+            user=self.outsider,
+            role=ProjectMember.Role.MEMBER,
+            assigned_by=self.owner,
+        )
+        OrganizationMember.objects.create(
+            organization=self.organization,
+            user=self.outsider,
+            role=OrganizationMember.Role.MEMBER,
+        )
+        OrganizationMember.objects.filter(
+            organization=self.organization,
+            user=self.outsider,
+        ).delete()
+
+        response = self.client.post(
+            self.task_list_url,
+            {
+                "project_id": self.project.id,
+                "title": "Invalid stale assignment",
+                "assigned_to": self.outsider.id,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("assigned_to", response.data)
+
     def test_manager_can_create_task(self):
         self.client.force_authenticate(user=self.manager)
 
@@ -271,6 +303,14 @@ class TaskAPITests(APITestCase):
         self.assertEqual(
             self.task.title,
             "Updated Authentication Task",
+        )
+        self.assertTrue(
+            TaskActivity.objects.filter(
+                task=self.task,
+                actor=self.manager,
+                action="updated",
+                metadata__fields__contains=["title"],
+            ).exists()
         )
 
     def test_employee_cannot_update_task(self):
@@ -352,6 +392,49 @@ class TaskAPITests(APITestCase):
             self.task.assigned_to_id,
             self.manager.id,
         )
+
+    def test_manager_assignment_rejects_malformed_user_ids(self):
+        self.client.force_authenticate(user=self.manager)
+        assign_url = reverse("task-assign", kwargs={"pk": self.task.pk})
+
+        for user_id in ["not-an-id", 0, True, {"id": self.employee.id}]:
+            with self.subTest(user_id=user_id):
+                response = self.client.post(
+                    assign_url,
+                    {"user": user_id},
+                    format="json",
+                )
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_manager_can_unassign_task(self):
+        self.client.force_authenticate(user=self.manager)
+
+        response = self.client.post(
+            reverse(
+                "task-assign",
+                kwargs={"pk": self.task.pk},
+            ),
+            {"user": None},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.task.refresh_from_db()
+        self.assertIsNone(self.task.assigned_to_id)
+
+    def test_manager_can_assign_previously_unassigned_task(self):
+        self.client.force_authenticate(user=self.manager)
+        self.task.assigned_to = None
+        self.task.save(update_fields=["assigned_to"])
+
+        response = self.client.post(
+            reverse("task-assign", kwargs={"pk": self.task.pk}),
+            {"user": self.employee.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["assigned_to"], self.employee.id)
 
     def test_cannot_assign_task_to_non_project_member(self):
         self.client.force_authenticate(user=self.manager)

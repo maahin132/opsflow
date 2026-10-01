@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from apps.organizations.models import OrganizationMember
 from apps.projects.models import ProjectMember
+from apps.comments.models import TaskActivity
 
 from .models import Task
 from .serializers import TaskSerializer
@@ -115,10 +116,38 @@ class TaskViewSet(viewsets.ModelViewSet):
                 "can create tasks."
             )
 
-        serializer.save(created_by=user)
+        task = serializer.save(created_by=user)
+        TaskActivity.objects.create(
+            task=task,
+            actor=user,
+            action="created",
+            description=f"Created task {task.title}",
+        )
 
     def perform_update(self, serializer):
-        serializer.save()
+        task = serializer.instance
+        previous_values = {
+            field: getattr(task, field)
+            for field in serializer.validated_data
+        }
+        updated_task = serializer.save()
+        changed_fields = [
+            field
+            for field, previous_value in previous_values.items()
+            if getattr(updated_task, field) != previous_value
+        ]
+
+        if changed_fields:
+            TaskActivity.objects.create(
+                task=updated_task,
+                actor=self.request.user,
+                action="updated",
+                description=(
+                    "Updated task details: "
+                    + ", ".join(field.replace("_", " ") for field in changed_fields)
+                ),
+                metadata={"fields": changed_fields},
+            )
 
     @action(
         detail=True,
@@ -129,13 +158,32 @@ class TaskViewSet(viewsets.ModelViewSet):
     def assign(self, request, pk=None):
         task = self.get_object()
 
-        user_id = request.data.get("user")
-
-        if not user_id:
+        if "user" not in request.data:
             return Response(
                 {"detail": "User ID is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        user_id = request.data.get("user")
+        if user_id is not None:
+            if isinstance(user_id, bool):
+                return Response(
+                    {"user": ["User ID must be a positive integer or null."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                user_id = int(user_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {"user": ["User ID must be a positive integer or null."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if user_id <= 0:
+                return Response(
+                    {"user": ["User ID must be a positive integer or null."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         membership = OrganizationMember.objects.filter(
             organization=task.project.organization,
@@ -152,24 +200,54 @@ class TaskViewSet(viewsets.ModelViewSet):
                 "Only organization managers can assign tasks."
             )
 
-        project_membership = ProjectMember.objects.filter(
-            project=task.project,
-            user_id=user_id,
-        ).first()
+        if user_id:
+            is_workspace_member = OrganizationMember.objects.filter(
+                organization=task.project.organization,
+                user_id=user_id,
+            ).exists()
 
-        if not project_membership:
-            return Response(
-                {
-                    "detail": (
-                        "User must be a member of this project."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            if not is_workspace_member:
+                return Response(
+                    {
+                        "detail": (
+                            "User must belong to the task's workspace."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        task.assigned_to_id = user_id
+            project_membership = ProjectMember.objects.filter(
+                project=task.project,
+                user_id=user_id,
+            ).select_related("user").first()
+
+            if not project_membership:
+                return Response(
+                    {
+                        "detail": (
+                            "User must be a member of this project."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            assigned_user = project_membership.user
+        else:
+            assigned_user = None
+
+        task.assigned_to = assigned_user
         task.save(
             update_fields=["assigned_to", "updated_at"]
+        )
+        TaskActivity.objects.create(
+            task=task,
+            actor=request.user,
+            action="assigned" if task.assigned_to_id else "unassigned",
+            description=(
+                f"Assigned task to {task.assigned_to.username}"
+                if task.assigned_to_id
+                else "Removed task assignee"
+            ),
+            metadata={"assigned_to": task.assigned_to_id},
         )
 
         return Response(
@@ -224,8 +302,24 @@ class TaskViewSet(viewsets.ModelViewSet):
                 "can update task status."
             )
 
+        previous_status = task.status
         task.status = new_status
         task.save()
+
+        if previous_status != new_status:
+            TaskActivity.objects.create(
+                task=task,
+                actor=user,
+                action="status_changed",
+                description=(
+                    f"Changed status from {previous_status.replace('_', ' ').title()} "
+                    f"to {new_status.replace('_', ' ').title()}"
+                ),
+                metadata={
+                    "from": previous_status,
+                    "to": new_status,
+                },
+            )
 
         return Response(
             TaskSerializer(

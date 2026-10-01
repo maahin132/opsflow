@@ -1,13 +1,16 @@
 
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.comments.models import TaskActivity
 from apps.organizations.models import Organization, OrganizationMember
 from apps.organizations.permissions import IsOrganizationManager
+from apps.tasks.models import Task
 
 from .models import Project, ProjectMember
 from .serializers import ProjectMemberSerializer, ProjectSerializer
@@ -102,9 +105,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
             ProjectMember.Role.MEMBER,
         )
 
-        if not user_id:
+        if isinstance(user_id, bool):
+            user_id = None
+        try:
+            user_id = int(user_id)
+        except (TypeError, ValueError):
+            user_id = None
+
+        if user_id is None or user_id <= 0:
             return Response(
-                {"detail": "User ID is required."},
+                {"user": ["User ID must be a positive integer."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -113,7 +123,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             for choice in ProjectMember.Role.choices
         ]
 
-        if role not in valid_roles:
+        if not isinstance(role, str) or role not in valid_roles:
             return Response(
                 {"detail": "Invalid project role."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -163,6 +173,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
     )
     @transaction.atomic
     def remove_member(self, request, pk=None, user_id=None):
+        try:
+            user_id = int(user_id)
+        except (TypeError, ValueError):
+            return Response(
+                {"user_id": ["User ID must be a positive integer."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if user_id <= 0:
+            return Response(
+                {"user_id": ["User ID must be a positive integer."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         project = self.get_object()
 
         membership = get_object_or_404(
@@ -170,6 +193,30 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project=project,
             user_id=user_id,
         )
+
+        assigned_tasks = list(
+            Task.objects.filter(
+                project=project,
+                assigned_to=membership.user,
+            ).only("id", "title")
+        )
+        TaskActivity.objects.bulk_create([
+            TaskActivity(
+                task=task,
+                actor=request.user,
+                action="unassigned",
+                description="Removed task assignee because the user left the project",
+                metadata={"removed_user_id": membership.user_id},
+            )
+            for task in assigned_tasks
+        ])
+        if assigned_tasks:
+            Task.objects.filter(
+                id__in=[task.id for task in assigned_tasks]
+            ).update(
+                assigned_to=None,
+                updated_at=timezone.now(),
+            )
 
         membership.delete()
 

@@ -1146,7 +1146,7 @@ Exact error response formats may vary depending on Django REST Framework validat
 
 \- The API uses database-generated IDs and timestamps.
 
-\- No JWT endpoints, file-upload endpoints, or organization member-management endpoints are documented because they were not present in the inspected URL configuration.
+\- No JWT or file-upload endpoints are provided by the current implementation.
 
 
 
@@ -1155,4 +1155,52 @@ Exact error response formats may vary depending on Django REST Framework validat
 
 
 \*\*Documentation status:\*\* Based on the inspected Django URL configuration, views, serializers, permissions, and models. Verify response examples against the running API before using them as contractual client schemas.
+
+## 11. Recently Added API Operations
+
+### Organization members
+
+Organization responses include `current_user_role` and a `members` array with `id`, `user_id`, `username`, `email`, and `role`.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/organizations/{id}/members/` | Add an existing active OpsFlow user by email |
+| PATCH | `/api/organizations/{id}/members/{user_id}/` | Change a member role |
+| DELETE | `/api/organizations/{id}/members/{user_id}/` | Remove a member |
+
+Add-member request:
+
+```json
+{
+	"email": "person@example.com",
+	"role": "MEMBER"
+}
+```
+
+Only owners/admins can manage workspace members. Only the owner can grant or manage the `ADMIN` role. The organization owner cannot be demoted or removed. Duplicate membership returns `409 Conflict`; an unknown or inactive email returns `404 Not Found`.
+
+Removing a workspace member also removes their project memberships and unassigns their tasks. Removing a project member unassigns tasks in that project. Both operations record task activity.
+
+### Comment updates and deletion
+
+| Method | Endpoint | Description |
+|---|---|---|
+| PATCH | `/api/tasks/{task_id}/comments/{comment_id}/` | Edit a comment |
+| DELETE | `/api/tasks/{task_id}/comments/{comment_id}/` | Delete a comment |
+
+Only the comment author or a workspace owner/admin/manager may edit or delete it. Both operations create an activity record.
+
+### Workspace activity
+
+`GET /api/activity/` returns paginated task activity for the authenticated user's active organizations. Items include `task_title` and `project_name` for display. Task create, task detail edits, assignment changes, status changes, and comment changes generate activity entries.
+
+### Response identifiers
+
+Project responses include read-only `organization_pk`; task responses include read-only `project_pk`. Request fields `organization_id` and `project_id` remain write-only.
+
+## 13. Frontend and production configuration
+
+The frontend reads `VITE_API_BASE_URL` at build time. Local development defaults to `http://localhost:8000/api/`; production defaults to the same-origin `/api/` route. When the API is hosted on a separate origin, set `VITE_API_BASE_URL` to that API's `/api/` base URL before building. Frontend Vite variables are public and must never contain secrets.
+
+For cross-origin session authentication, production Django must set `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` to the frontend origin. Credentialed CORS is enabled, and production session/CSRF cookies use `Secure` with `SameSite=None` so the browser can send them to a separate API origin over HTTPS.
 

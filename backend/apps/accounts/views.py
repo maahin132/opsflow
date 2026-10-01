@@ -85,3 +85,19 @@ class MeAPIView(APIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_GET
+
+
+@require_GET
+@ensure_csrf_cookie
+def csrf_token_view(request):
+    """
+    Set a CSRF cookie for the React frontend.
+    """
+    from django.middleware.csrf import get_token
+
+    return JsonResponse({
+        "csrfToken": get_token(request),
+    })

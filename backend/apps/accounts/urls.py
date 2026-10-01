@@ -1,14 +1,20 @@
-from django.urls import path
+﻿from django.urls import path
 
 from .views import (
     LoginAPIView,
     LogoutAPIView,
     MeAPIView,
     RegisterAPIView,
+    csrf_token_view,
 )
 
 
 urlpatterns = [
+    path(
+        "csrf/",
+        csrf_token_view,
+        name="auth-csrf",
+    ),
     path(
         "register/",
         RegisterAPIView.as_view(),
