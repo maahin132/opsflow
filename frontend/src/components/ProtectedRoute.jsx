@@ -8,15 +8,22 @@ function ProtectedRoute() {
   // Wait until Django session authentication is checked
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950 text-white">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        className="flex min-h-screen items-center justify-center bg-canvas text-ink dark:bg-[#24211E] dark:text-white"
+      >
         <div className="text-center">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-gray-700 border-t-blue-500" />
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-line border-t-accent dark:border-white/10 dark:border-t-[#cdb8a8]" />
 
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted dark:text-white/45">
             Checking authentication...
           </p>
         </div>
-      </div>
+      </main>
     );
   }
 

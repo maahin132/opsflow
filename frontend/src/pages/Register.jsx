@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   UserRound,
@@ -29,6 +29,9 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const redirectTimeout = useRef(null);
+
+  useEffect(() => () => window.clearTimeout(redirectTimeout.current), []);
 
   const handleChange = (e) => {
     setFormData({
@@ -65,7 +68,7 @@ export default function Register() {
 
       setSuccess("Account created successfully! Redirecting to login...");
 
-      setTimeout(() => {
+      redirectTimeout.current = window.setTimeout(() => {
         navigate("/login", { replace: true });
       }, 1200);
     } catch (err) {
@@ -103,7 +106,7 @@ export default function Register() {
     "mb-2 block text-sm font-medium text-gray-300";
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080b12] px-4 py-12 text-white">
+    <main id="main-content" tabIndex={-1} className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080b12] px-4 py-12 text-white">
       {/* Background */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/10 blur-[120px]" />
@@ -268,6 +271,7 @@ export default function Register() {
                   aria-label={
                     showPassword ? "Hide password" : "Show password"
                   }
+                  title={showPassword ? "Hide password" : "Show password"}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
                 >
                   {showPassword ? (
@@ -316,6 +320,7 @@ export default function Register() {
                       ? "Hide confirm password"
                       : "Show confirm password"
                   }
+                  title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
                 >
                   {showConfirmPassword ? (
@@ -351,6 +356,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading || Boolean(success)}
+              aria-busy={loading}
               className="group flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-[#10141e] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (

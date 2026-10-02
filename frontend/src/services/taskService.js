@@ -18,7 +18,10 @@ async function getAllPages(path) {
 }
 
 const taskService = {
-  getTasks: () => getAllPages("tasks/"),
+  getTasks: (filters = {}) => {
+    const query = new URLSearchParams(filters).toString();
+    return getAllPages(`tasks/${query ? `?${query}` : ""}`);
+  },
   getWorkspaceActivity: async () => {
     const response = await api.get("activity/");
     const data = response.data;

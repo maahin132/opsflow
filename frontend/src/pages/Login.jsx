@@ -57,7 +57,7 @@ export default function Login() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080b12] px-4 py-12 text-white">
+    <main id="main-content" tabIndex={-1} className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080b12] px-4 py-12 text-white">
       {/* Background */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/10 blur-[120px]" />
@@ -166,6 +166,7 @@ export default function Login() {
                   aria-label={
                     showPassword ? "Hide password" : "Show password"
                   }
+                  title={showPassword ? "Hide password" : "Show password"}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-white"
                 >
                   {showPassword ? (
@@ -191,6 +192,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
               className="group flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-[#10141e] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (

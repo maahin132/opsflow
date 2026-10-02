@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, CheckSquare, Hash, X } from "lucide-react";
+import { useDialogFocusReturn } from "../utils/useDialogFocusReturn";
 
 const INITIAL_FORM = {
   project_id: "",
@@ -15,6 +16,7 @@ const INITIAL_FORM = {
 };
 
 function TaskModal({ open, onClose, onSubmit, projects, loading = false, error = "" }) {
+  useDialogFocusReturn();
   const [form, setForm] = useState(INITIAL_FORM);
   const [localError, setLocalError] = useState("");
   const selectedProject = projects.find((project) => String(project.id) === form.project_id);

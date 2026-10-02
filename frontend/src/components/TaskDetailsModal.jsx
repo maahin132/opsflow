@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, CheckSquare, LoaderCircle, MessageSquare, Pencil, Send, Trash2, X } from "lucide-react";
 import taskService from "../services/taskService";
+import { formatDate, formatDateTime } from "../utils/dateFormat";
+import { useDialogFocusReturn } from "../utils/useDialogFocusReturn";
 
 const TASK_STATUSES = [
   ["TODO", "To do"],
@@ -21,6 +23,7 @@ function readError(error) {
 }
 
 function TaskDetailsModal({ task, project, canManage, canChangeStatus, userId, onClose, onTaskUpdated, onTaskDeleted }) {
+  useDialogFocusReturn();
   const [comments, setComments] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -259,7 +262,7 @@ function TaskDetailsModal({ task, project, canManage, canChangeStatus, userId, o
                       ) : <span className="flex h-10 items-center rounded-lg border border-white/10 bg-[#242428] px-3 text-sm font-medium text-white">{task.assigned_to_email || "Unassigned"}</span>}
                     </div>
                     <div className="grid gap-2 text-xs font-semibold text-white/55">Due date
-                      <span className="flex h-10 items-center rounded-lg border border-white/10 bg-[#242428] px-3 text-sm font-medium text-white">{task.due_date ? new Date(`${task.due_date}T00:00:00`).toLocaleDateString() : "No due date"}</span>
+                      <span className="flex h-10 items-center rounded-lg border border-white/10 bg-[#242428] px-3 text-sm font-medium text-white">{formatDate(task.due_date, "No due date")}</span>
                     </div>
                   </div>
 
@@ -303,7 +306,7 @@ function TaskDetailsModal({ task, project, canManage, canChangeStatus, userId, o
                       <ol className="space-y-3">
                         {activities.slice(0, 8).map((item) => <li key={item.id} className="border-l border-white/10 pl-3 text-xs">
                           <p className="text-white/75">{item.description || item.action}</p>
-                          <p className="mt-1 text-[10px] text-white/35">{item.actor_name || "OpsFlow"} · {new Date(item.created_at).toLocaleString()}</p>
+                          <p className="mt-1 text-[10px] text-white/35">{item.actor_name || "OpsFlow"} · {formatDateTime(item.created_at)}</p>
                         </li>)}
                       </ol>
                     ) : <p className="py-2 text-xs text-white/40">No activity recorded yet.</p>}
@@ -324,7 +327,7 @@ function TaskDetailsModal({ task, project, canManage, canChangeStatus, userId, o
                           return <article key={item.id} className="flex gap-3">
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#635BFF]/20 text-[10px] font-bold text-[#c0bcff]">{item.author_name?.slice(0, 2).toUpperCase() || "U"}</span>
                             <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-baseline gap-x-2"><span className="text-xs font-semibold text-white/85">{item.author_name}</span><time className="text-[10px] text-white/35">{new Date(item.created_at).toLocaleString()}</time></div>
+                              <div className="flex flex-wrap items-baseline gap-x-2"><span className="text-xs font-semibold text-white/85">{item.author_name}</span><time dateTime={item.created_at} className="text-[10px] text-white/35">{formatDateTime(item.created_at)}</time></div>
                               {editingCommentId === item.id ? <form onSubmit={(event) => saveComment(event, item.id)} className="mt-2 space-y-2">
                                 <label className="sr-only" htmlFor={`comment-edit-${item.id}`}>Edit comment</label>
                                 <textarea id={`comment-edit-${item.id}`} autoFocus maxLength={4000} value={commentDraft} onChange={(event) => setCommentDraft(event.target.value)} disabled={commentMutationId === item.id} className="w-full resize-y rounded-lg border border-white/10 bg-[#242428] px-3 py-2 text-sm text-white outline-none focus:border-[#827BFF]" />
@@ -356,7 +359,7 @@ function TaskDetailsModal({ task, project, canManage, canChangeStatus, userId, o
                     <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
                       {activities.length ? activities.map((item) => <article key={item.id} className="rounded-lg border border-white/[0.07] p-3">
                         <p className="text-xs text-white/75">{item.description || item.action}</p>
-                        <p className="mt-1.5 text-[10px] text-white/35">{item.actor_name || "OpsFlow"} · {new Date(item.created_at).toLocaleString()}</p>
+                        <p className="mt-1.5 text-[10px] text-white/35">{item.actor_name || "OpsFlow"} · {formatDateTime(item.created_at)}</p>
                       </article>) : <div className="py-10 text-center"><CheckSquare size={21} className="mx-auto mb-3 text-white/25" /><p className="text-xs text-white/45">No activity recorded yet.</p></div>}
                     </div>
                   )}

@@ -25,7 +25,6 @@ html {
 
 body {
   margin: 0;
-  min-width: 320px;
   min-height: 100vh;
   background: #f7f7f5;
 }
@@ -41,11 +40,118 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid #806858;
+  outline-offset: 3px;
+}
+
 ::selection {
-  background: #635bff;
+  background: #9a8170;
   color: #ffffff;
 }
 
 #root {
   min-height: 100vh;
+}
+
+.skip-link {
+  position: fixed;
+  top: -5rem;
+  left: 1rem;
+  z-index: 200;
+  border-radius: 0.5rem;
+  background: #24211e;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.app-scroll-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 120;
+  height: 3px;
+  background: transparent;
+  pointer-events: none;
+}
+
+.app-scroll-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #9a8170;
+  transform-origin: left center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: auto !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  button,
+  .skip-link,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  aside,
+  .sticky,
+  .fixed {
+    position: static !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  main,
+  main * {
+    color: #000 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  main section,
+  main article {
+    break-inside: avoid;
+    border-color: #999 !important;
+  }
+
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
 }

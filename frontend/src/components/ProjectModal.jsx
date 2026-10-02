@@ -9,6 +9,7 @@ import {
   ChevronDown,
   LoaderCircle,
 } from "lucide-react";
+import { useDialogFocusReturn } from "../utils/useDialogFocusReturn";
 
 const INITIAL_FORM = {
   name: "",
@@ -30,6 +31,7 @@ function ProjectModal({
   organizationsLoading = false,
   organizationsError = "",
 }) {
+  useDialogFocusReturn();
   const [form, setForm] = useState(INITIAL_FORM);
   const [localError, setLocalError] = useState("");
   const [organizationId, setOrganizationId] = useState("");

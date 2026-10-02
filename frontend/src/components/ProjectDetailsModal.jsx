@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Archive, CalendarDays, LoaderCircle, Plus, Users, X } from "lucide-react";
+import { useDialogFocusReturn } from "../utils/useDialogFocusReturn";
 
 const STATUS_OPTIONS = [
   ["PLANNING", "Planning"],
@@ -32,6 +33,7 @@ function ProjectDetailsModal({
   onUpdateOrganizationMember,
   onRemoveOrganizationMember,
 }) {
+  useDialogFocusReturn();
   const [form, setForm] = useState({
     name: project.name ?? "",
     code: project.code ?? "",
